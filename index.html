@@ -1,42 +1,138 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Juego del Número Mágico</title>
-  <link rel="stylesheet" href="./styles/styles.css">
-</head>
-<body>
-  <div class="container">
-    <h1>Juego del Número Mágico</h1>
-    <p>Adivina un número entre 1 y 100 en 10 intentos.</p>
+// Variables iniciales
+let randomNumber = Math.floor(Math.random() * 100) + 1;
+let attempts = 1;
+const maxAttempts = 10;
+let previousGuesses = [];
+let topByAttempts = []; // Lista para el top basado en intentos
+let topByTime = []; // Lista para el top basado en tiempo
+let startTime; // Para el tiempo de inicio
+
+// Elementos de la interfaz
+const guessInput = document.getElementById('guess');
+const submitButton = document.getElementById('submitGuess');
+const feedback = document.getElementById('feedback');
+const remaining = document.getElementById('remaining');
+const previousGuessesDisplay = document.getElementById('previousGuesses');
+const restartButton = document.getElementById('restart');
+const resultsAttempts = document.getElementById('results-attempts');
+const resultsTime = document.getElementById('results-time');
+
+// Función para iniciar el cronómetro
+function startTimer() {
+  startTime = Date.now();
+}
+
+// Función para verificar el número ingresado
+function checkGuess() {
+  const guess = Number(guessInput.value);
+  
+  if (!guess || guess < 1 || guess > 100) {
+    feedback.textContent = 'Por favor, ingresa un número válido entre 1 y 100.';
+    return;
+  }
+
+  previousGuesses.push(guess);
+  previousGuessesDisplay.textContent = previousGuesses.join(', ');
+
+  if (guess === randomNumber) {
+    const endTime = Date.now(); // Fin del cronómetro
+    const totalTime = Math.floor((endTime - startTime) / 1000); // Tiempo total en segundos
+
+    feedback.textContent = ¡Felicidades! Adivinaste el número correcto en ${attempts} intentos y ${totalTime} segundos.;
     
-    <div id="game-container">
-      <label for="guess">Ingresa tu número pensado:</label>
-      <input type="number" id="guess" min="1" max="100">
-      <button id="submitGuess">Enviar</button>
+    // Añadir a las listas de top 5
+    updateTopByAttempts(attempts, guess);
+    updateTopByTime(totalTime, guess);
 
-      <p id="feedback"></p>
-      <p>Intentos restantes: <span id="remaining">10</span></p>
-      <p>Intentos anteriores: <span id="previousGuesses"></span></p>
-    </div>
+    endGame();
+  } else if (attempts < maxAttempts) {
+    feedback.textContent = guess < randomNumber ? 'El número es mayor.' : 'El número es menor.';
+    attempts++;
+    remaining.textContent = maxAttempts - attempts + 1;
+  } else {
+    feedback.textContent = Has agotado tus intentos. El número correcto era ${randomNumber};
+    endGame();
+  }
 
-    <button id="restart" style="display: none;">Jugar de nuevo</button>
-  </div>
+  guessInput.value = '';
+}
 
-  <div class="tabla">
-    <h2>Top 5 mejores adivinanzas:</h2>
-    
-    <div id="results-container">
-      
+// Función para actualizar el top por intentos
+function updateTopByAttempts(attempts, guess) {
+  topByAttempts.push({ attempts, guess });
 
-    </div>
-  </div>
+  // Ordenar la lista por el menor número de intentos
+  topByAttempts.sort((a, b) => a.attempts - b.attempts);
 
-  <div class="tabla2">
-    <h2>Top 5 mejores tiempos</h2>
-  </div>
+  // Mantener solo los mejores 5 resultados
+  if (topByAttempts.length > 5) {
+    topByAttempts.pop();
+  }
 
-  <script src="./script/script.js"></script>
-</body>
-</html>
+  // Actualizar la interfaz
+  displayTopByAttempts();
+}
+
+// Función para actualizar el top por tiempo
+function updateTopByTime(totalTime, guess) {
+  topByTime.push({ totalTime, guess });
+
+  // Ordenar la lista por el menor tiempo
+  topByTime.sort((a, b) => a.totalTime - b.totalTime);
+
+  // Mantener solo los mejores 5 resultados
+  if (topByTime.length > 5) {
+    topByTime.pop();
+  }
+
+  // Actualizar la interfaz
+  displayTopByTime();
+}
+
+// Funciones para mostrar los resultados en la interfaz
+function displayTopByAttempts() {
+  resultsAttempts.innerHTML = ''; // Limpiamos el contenido anterior
+  topByAttempts.forEach((entry, index) => {
+    const resultItem = document.createElement('p');
+    resultItem.textContent = ${index + 1}. Intentos: ${entry.attempts}, Adivinado: ${entry.guess};
+    resultsAttempts.appendChild(resultItem);
+  });
+}
+
+function displayTopByTime() {
+  resultsTime.innerHTML = ''; // Limpiamos el contenido anterior
+  topByTime.forEach((entry, index) => {
+    const resultItem = document.createElement('p');
+    resultItem.textContent = ${index + 1}. Tiempo: ${entry.totalTime} segundos, Adivinado: ${entry.guess};
+    resultsTime.appendChild(resultItem);
+  });
+}
+
+// Función para finalizar el juego
+function endGame() {
+  guessInput.disabled = true;
+  submitButton.disabled = true;
+  restartButton.style.display = 'block';
+}
+
+// Función para reiniciar el juego
+function restartGame() {
+  randomNumber = Math.floor(Math.random() * 100) + 1;
+  attempts = 1;
+  previousGuesses = [];
+  guessInput.disabled = false;
+  submitButton.disabled = false;
+  feedback.textContent = '';
+  remaining.textContent = maxAttempts;
+  previousGuessesDisplay.textContent = '';
+  guessInput.value = '';
+  restartButton.style.display = 'none';
+  startTimer(); // Reiniciar el cronómetro
+}
+
+// Eventos
+submitButton.addEventListener('click', checkGuess);
+restartButton.addEventListener('click', restartGame);
+
+// Iniciar cronómetro cuando se carga el juego
+startTimer();
